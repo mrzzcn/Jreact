@@ -1,20 +1,42 @@
+const RENDER_TO_DOM = Symbol('Render To Dom');
+
 class ElementWrapper {
   constructor(type) {
     this.root = document.createElement(type);
   }
 
   setAttribute(name, value) {
-    this.root.setAttribute(name, value);
+    if (name.match(/^on([\s\S]+)$/)) {
+      this.root.addEventListener(RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase()), value)
+    } else {
+      this.root.setAttribute(name, value);
+    }
   }
 
   appendChild(component) {
-    this.root.appendChild(component.root);
+    // this.root.appendChild(component.root);
+
+    const range = document.createRange();
+    range.setStart(this.root, this.root.childNodes.length);
+    range.setEnd(this.root, this.root.childNodes.length);
+
+    component[RENDER_TO_DOM](range);
+  }
+
+  [RENDER_TO_DOM](range) {
+    range.deleteContents();
+    range.insertNode(this.root);
   }
 }
 
 class TextWrapper {
   constructor(content) {
     this.root = document.createTextNode(content);
+  }
+
+  [RENDER_TO_DOM](range) {
+    range.deleteContents();
+    range.insertNode(this.root);
   }
 }
 
@@ -23,6 +45,7 @@ export class Component {
     this.props = Object.create(null);
     this.children = [];
     this._root = null;
+    this._range = null;
   }
 
   setAttribute(name, value) {
@@ -33,11 +56,14 @@ export class Component {
     this.children.push(component);
   }
 
-  get root() {
-    if (!this._root) {
-      this._root = this.render().root
-    }
-    return this._root;
+  [RENDER_TO_DOM](range) {
+    this._range = range;
+    return this.render()[RENDER_TO_DOM](range)
+  }
+
+  rerender() {
+    this._range.deleteContents();
+    this[RENDER_TO_DOM](this._range);
   }
 }
 
@@ -53,7 +79,12 @@ export function createElement(type, attributes, ...children) {
   }
   const insertChildren = (children) => {
     for (let child of children) {
-      if (typeof child === 'string') {
+      if (typeof child === 'string' ||
+        typeof child === 'number' ||
+        typeof child === 'bigint' ||
+        typeof child === 'boolean' ||
+        typeof child === 'symbol'
+      ) {
         child = new TextWrapper(child)
       }
       if (Array.isArray(child)) {
@@ -69,7 +100,12 @@ export function createElement(type, attributes, ...children) {
 
 export function render(component, parentDom) {
   console.log('rendering', component, parentDom)
-  parentDom.appendChild(component.root)
+  // parentDom.appendChild(component.root)
+  const range = document.createRange();
+  range.setStart(parentDom, 0);
+  range.setStart(parentDom, parentDom.childNodes.length);
+  range.deleteContents()
+  component[RENDER_TO_DOM](range)
 }
 
 const Jreact = { createElement };

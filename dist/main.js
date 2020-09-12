@@ -98,6 +98,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Component", function() { return Component; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createElement", function() { return createElement; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
 function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
@@ -110,6 +112,8 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+var RENDER_TO_DOM = Symbol('Render To Dom');
+
 var ElementWrapper = /*#__PURE__*/function () {
   function ElementWrapper(type) {
     _classCallCheck(this, ElementWrapper);
@@ -120,23 +124,51 @@ var ElementWrapper = /*#__PURE__*/function () {
   _createClass(ElementWrapper, [{
     key: "setAttribute",
     value: function setAttribute(name, value) {
-      this.root.setAttribute(name, value);
+      if (name.match(/^on([\s\S]+)$/)) {
+        this.root.addEventListener(RegExp.$1.replace(/^[\s\S]/, function (c) {
+          return c.toLowerCase();
+        }), value);
+      } else {
+        this.root.setAttribute(name, value);
+      }
     }
   }, {
     key: "appendChild",
     value: function appendChild(component) {
-      this.root.appendChild(component.root);
+      // this.root.appendChild(component.root);
+      var range = document.createRange();
+      range.setStart(this.root, this.root.childNodes.length);
+      range.setEnd(this.root, this.root.childNodes.length);
+      component[RENDER_TO_DOM](range);
+    }
+  }, {
+    key: RENDER_TO_DOM,
+    value: function value(range) {
+      range.deleteContents();
+      range.insertNode(this.root);
     }
   }]);
 
   return ElementWrapper;
 }();
 
-var TextWrapper = function TextWrapper(content) {
-  _classCallCheck(this, TextWrapper);
+var TextWrapper = /*#__PURE__*/function () {
+  function TextWrapper(content) {
+    _classCallCheck(this, TextWrapper);
 
-  this.root = document.createTextNode(content);
-};
+    this.root = document.createTextNode(content);
+  }
+
+  _createClass(TextWrapper, [{
+    key: RENDER_TO_DOM,
+    value: function value(range) {
+      range.deleteContents();
+      range.insertNode(this.root);
+    }
+  }]);
+
+  return TextWrapper;
+}();
 
 var Component = /*#__PURE__*/function () {
   function Component() {
@@ -145,6 +177,7 @@ var Component = /*#__PURE__*/function () {
     this.props = Object.create(null);
     this.children = [];
     this._root = null;
+    this._range = null;
   }
 
   _createClass(Component, [{
@@ -158,13 +191,17 @@ var Component = /*#__PURE__*/function () {
       this.children.push(component);
     }
   }, {
-    key: "root",
-    get: function get() {
-      if (!this._root) {
-        this._root = this.render().root;
-      }
+    key: RENDER_TO_DOM,
+    value: function value(range) {
+      this._range = range;
+      return this.render()[RENDER_TO_DOM](range);
+    }
+  }, {
+    key: "rerender",
+    value: function rerender() {
+      this._range.deleteContents();
 
-      return this._root;
+      this[RENDER_TO_DOM](this._range);
     }
   }]);
 
@@ -191,7 +228,7 @@ function createElement(type, attributes) {
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var child = _step.value;
 
-        if (typeof child === 'string') {
+        if (typeof child === 'string' || typeof child === 'number' || typeof child === 'bigint' || typeof child === 'boolean' || _typeof(child) === 'symbol') {
           child = new TextWrapper(child);
         }
 
@@ -216,8 +253,13 @@ function createElement(type, attributes) {
   return element;
 }
 function render(component, parentDom) {
-  console.log('rendering', component, parentDom);
-  parentDom.appendChild(component.root);
+  console.log('rendering', component, parentDom); // parentDom.appendChild(component.root)
+
+  var range = document.createRange();
+  range.setStart(parentDom, 0);
+  range.setStart(parentDom, parentDom.childNodes.length);
+  range.deleteContents();
+  component[RENDER_TO_DOM](range);
 }
 var Jreact = {
   createElement: createElement
@@ -266,16 +308,32 @@ var MyComponent = /*#__PURE__*/function (_Component) {
 
   var _super = _createSuper(MyComponent);
 
-  function MyComponent() {
+  function MyComponent(props) {
+    var _this;
+
     _classCallCheck(this, MyComponent);
 
-    return _super.apply(this, arguments);
+    _this = _super.call(this);
+    _this.state = {
+      hello: 'Jack',
+      a: 1,
+      b: 2
+    };
+    return _this;
   }
 
   _createClass(MyComponent, [{
     key: "render",
     value: function render() {
-      return _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("div", null, _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("h1", null, "My Component"), this.children);
+      var _this2 = this;
+
+      return _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("div", null, _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("h1", null, "My Component: ", this.state.hello), _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("p", null, "count: ", this.state.a), _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("button", {
+        onclick: function onclick() {
+          _this2.state.a++;
+
+          _this2.rerender();
+        }
+      }, "Increase"), _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("hr", null), this.children);
     }
   }]);
 
