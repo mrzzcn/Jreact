@@ -1,7 +1,5 @@
-import { createElement, render, Component } from './Jreact'
+import Jreact, { render, Component } from './Jreact'
 console.log('Hello World');
-
-const Jreact = { createElement }
 
 class MyComponent extends Component {
   render() {

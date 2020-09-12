@@ -71,3 +71,7 @@ export function render(component, parentDom) {
   console.log('rendering', component, parentDom)
   parentDom.appendChild(component.root)
 }
+
+const Jreact = { createElement };
+
+export default Jreact;

@@ -90,7 +90,7 @@
 /*!*******************!*\
   !*** ./Jreact.js ***!
   \*******************/
-/*! exports provided: Component, createElement, render */
+/*! exports provided: Component, createElement, render, default */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -219,6 +219,10 @@ function render(component, parentDom) {
   console.log('rendering', component, parentDom);
   parentDom.appendChild(component.root);
 }
+var Jreact = {
+  createElement: createElement
+};
+/* harmony default export */ __webpack_exports__["default"] = (Jreact);
 
 /***/ }),
 
@@ -256,9 +260,6 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 
 console.log('Hello World');
-var Jreact = {
-  createElement: _Jreact__WEBPACK_IMPORTED_MODULE_0__["createElement"]
-};
 
 var MyComponent = /*#__PURE__*/function (_Component) {
   _inherits(MyComponent, _Component);
@@ -274,17 +275,17 @@ var MyComponent = /*#__PURE__*/function (_Component) {
   _createClass(MyComponent, [{
     key: "render",
     value: function render() {
-      return Jreact.createElement("div", null, Jreact.createElement("h1", null, "My Component"), this.children);
+      return _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("div", null, _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("h1", null, "My Component"), this.children);
     }
   }]);
 
   return MyComponent;
 }(_Jreact__WEBPACK_IMPORTED_MODULE_0__["Component"]);
 
-Object(_Jreact__WEBPACK_IMPORTED_MODULE_0__["render"])(Jreact.createElement(MyComponent, {
+Object(_Jreact__WEBPACK_IMPORTED_MODULE_0__["render"])(_Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement(MyComponent, {
   id: "root",
   "class": "class1"
-}, Jreact.createElement("div", null, "Hello World"), Jreact.createElement("div", null), Jreact.createElement("div", null)), document.body);
+}, _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("div", null, "Hello World"), _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("div", null), _Jreact__WEBPACK_IMPORTED_MODULE_0__["default"].createElement("div", null)), document.body);
 
 /***/ })
 
