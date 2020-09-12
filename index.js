@@ -16,9 +16,9 @@ class MyComponent extends Component {
       <div>
         <h1>My Component: {this.state.hello}</h1>
         <p>
-          count: {this.state.a}
+          count: {this.state.a} | b: {this.state.b}
         </p>
-        <button onclick={() => { this.state.a++; this.rerender(); }}>
+        <button onclick={() => { this.setState({ a: this.state.a + 1 }) }}>
           Increase
         </button>
         <hr />

@@ -65,6 +65,28 @@ export class Component {
     this._range.deleteContents();
     this[RENDER_TO_DOM](this._range);
   }
+
+  setState(newState) {
+    if (this.state === null || typeof this.state !== 'object') {
+      this.state = newState;
+      this.rerender();
+      return;
+    }
+
+    const merge = (oldState, newState) => {
+      for (let key in newState) {
+        if (oldState[key] === null || typeof oldState[key] !== 'object') {
+          oldState[key] = newState[key];
+          continue;
+        } else {
+          merge(oldState[key], newState[key]);
+        }
+      }
+    }
+
+    merge(this.state, newState);
+    this.rerender();
+  }
 }
 
 export function createElement(type, attributes, ...children) {
