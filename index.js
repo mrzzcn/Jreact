@@ -157,7 +157,10 @@ function calculateWinner(squares) {
   return null;
 }
 
+const game = <Game />
 render(
-  <Game />,
+  game,
   document.getElementById('app')
 )
+
+console.log(game.vdom)

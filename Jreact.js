@@ -1,48 +1,5 @@
 const RENDER_TO_DOM = Symbol('Render To Dom');
 
-class ElementWrapper {
-  constructor(type) {
-    this.root = document.createElement(type);
-  }
-
-  setAttribute(name, value) {
-    if (name.match(/^on([\s\S]+)$/)) {
-      this.root.addEventListener(RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase()), value)
-    } else {
-      if (name === 'className') {
-        name = 'class'
-      }
-      this.root.setAttribute(name, value);
-    }
-  }
-
-  appendChild(component) {
-    // this.root.appendChild(component.root);
-
-    const range = document.createRange();
-    range.setStart(this.root, this.root.childNodes.length);
-    range.setEnd(this.root, this.root.childNodes.length);
-
-    component[RENDER_TO_DOM](range);
-  }
-
-  [RENDER_TO_DOM](range) {
-    range.deleteContents();
-    range.insertNode(this.root);
-  }
-}
-
-class TextWrapper {
-  constructor(content) {
-    this.root = document.createTextNode(content);
-  }
-
-  [RENDER_TO_DOM](range) {
-    range.deleteContents();
-    range.insertNode(this.root);
-  }
-}
-
 export class Component {
   constructor() {
     this.props = Object.create(null);
@@ -101,7 +58,80 @@ export class Component {
     merge(this.state, newState);
     this.rerender();
   }
+
+  get vdom() {
+    return this.render().vdom
+  }
+
+  get vchildren() {
+    return this.children.map(child => child.vdom)
+  }
 }
+
+class ElementWrapper extends Component {
+  constructor(type) {
+    super(type)
+    this.type = type;
+  }
+
+  get vdom() {
+    // return {
+    //   type: this.type,
+    //   props: this.props,
+    //   children: this.children.map(c => c.vdom)
+    // }
+    return this;
+  }
+
+  [RENDER_TO_DOM](range) {
+    range.deleteContents();
+
+    const root = document.createElement(this.type);
+    for (let name in this.props) {
+      const value = this.props[name];
+      if (name.match(/^on([\s\S]+)$/)) {
+        root.addEventListener(RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase()), value)
+      } else {
+        if (name === 'className') {
+          name = 'class'
+        }
+        root.setAttribute(name, value);
+      }
+    }
+    for (let child of this.children) {
+      const childRange = document.createRange();
+      childRange.setStart(root, root.childNodes.length);
+      childRange.setEnd(root, root.childNodes.length);
+
+      child[RENDER_TO_DOM](childRange);
+    }
+
+    range.insertNode(root);
+  }
+}
+
+class TextWrapper extends Component {
+  constructor(content) {
+    super(content);
+    this.type = '#text';
+    this.content = content;
+  }
+
+  get vdom() {
+    // return {
+    //   type: '#text',
+    //   content: this.content
+    // }
+    return this;
+  }
+
+  [RENDER_TO_DOM](range) {
+    range.deleteContents();
+    const root = document.createTextNode(this.content);
+    range.insertNode(root);
+  }
+}
+
 
 export function createElement(type, attributes, ...children) {
   let element
