@@ -13,7 +13,6 @@ export class Component {
   constructor() {
     this.props = Object.create(null);
     this.children = [];
-    this._root = null;
     this._range = null;
   }
 
@@ -36,14 +35,15 @@ export class Component {
       if (oldNode.type !== newNode.type) {
         return false;
       }
+      if (Object.keys(oldNode.props).length !== Object.keys(newNode.props).length) {
+        return false;
+      }
       for (let name in newNode.props) {
-        if (newNode.props[name] !== oldNode.props[name]) {
+        if (newNode.props[name] !== oldNode.props[name] && !name.match(/^on([\s\S]+)$/)) {
           return false;
         }
       }
-      if (Object.keys(oldNode.props).length > Object.keys(newNode.props).length) {
-        return false;
-      }
+
       if (newNode.type === '#text' && oldNode.content !== newNode.content) {
         return false
       }
@@ -65,14 +65,21 @@ export class Component {
       if (!newVChildren || !newVChildren.length) {
         return;
       }
-      
-      let tailRange = oldVChildren[oldVChildren.length - 1]._range;
+
+      let tailRange;
+      if (oldVChildren && oldVChildren.length) {
+        tailRange = oldVChildren[oldVChildren.length - 1]._range;
+      } else {
+        tailRange = document.createRange();
+        tailRange.setStart(oldNode._range.startContainer.children[oldNode._range.startOffset], 0);
+        tailRange.setEnd(oldNode._range.startContainer.children[oldNode._range.startOffset], 0);
+      }
 
       for (let i = 0; i < newVChildren.length; i++) {
         const newChild = newVChildren[i];
         const oldChild = oldVChildren[i];
         if (i < oldVChildren.length) {
-          update(oldVChildren[i], newVChildren[i]);
+          update(oldChild, newChild);
         } else {
           // Add Node
           const range = document.createRange();
