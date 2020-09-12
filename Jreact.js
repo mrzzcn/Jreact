@@ -9,6 +9,9 @@ class ElementWrapper {
     if (name.match(/^on([\s\S]+)$/)) {
       this.root.addEventListener(RegExp.$1.replace(/^[\s\S]/, c => c.toLowerCase()), value)
     } else {
+      if (name === 'className') {
+        name = 'class'
+      }
       this.root.setAttribute(name, value);
     }
   }
@@ -64,6 +67,17 @@ export class Component {
   rerender() {
     this._range.deleteContents();
     this[RENDER_TO_DOM](this._range);
+
+    // TODO: Range Bug, 未重现
+    // const prevRange = this._range;
+
+    // const range = document.createRange();
+    // range.setStart(this._range.startContainer, this._range.startOffset);
+    // range.setEnd(this._range.startContainer, this._range.startOffset);
+    // this[RENDER_TO_DOM](range);
+
+    // prevRange.setStart(range.endContainer, range.endOffset);
+    // prevRange.deleteContents();
   }
 
   setState(newState) {
@@ -108,6 +122,9 @@ export function createElement(type, attributes, ...children) {
         typeof child === 'symbol'
       ) {
         child = new TextWrapper(child)
+      }
+      if (child === null || child === undefined) {
+        continue
       }
       if (Array.isArray(child)) {
         insertChildren(child)

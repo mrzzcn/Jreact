@@ -27,6 +27,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'Jreact Demo',
+      template: './public/index.html'
     }),
   ]
 }
