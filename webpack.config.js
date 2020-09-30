@@ -2,7 +2,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: {
-    main: './index.js'
+    main: './index.js',
+    v2: './v2.js'
   },
   mode: 'development',
   devServer: {
@@ -26,8 +27,16 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'Jreact Demo',
-      template: './public/index.html'
+      filename: 'index.html',
+      title: 'JReact Demo',
+      template: './public/index.html',
+      chunks: ['main']
+    }),
+    new HtmlWebpackPlugin({
+      filename: 'v2.html',
+      title: 'TReact Demo',
+      template: './public/index.html',
+      chunks: ['v2']
     }),
   ]
 }
